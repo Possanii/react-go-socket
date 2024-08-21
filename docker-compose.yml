@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  db:
+    image: bitnami/postgresql:latest
+    restart: unless-stopped
+    container_name: react-go-socket-db
+    ports:
+      - ${POSTGRES_DATABASE_PORT:-5432}:5432
+    environment:
+      POSTGRES_USER: ${POSTGRES_DATABASE_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DATABASE_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DATABASE_NAME}
+    volumes:
+      - db:/var/lib/postgresql/data
+
+volumes:
+  db:
+    driver: local
