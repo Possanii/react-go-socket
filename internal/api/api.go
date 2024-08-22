@@ -140,7 +140,22 @@ func (h apiHandler) handleCreateRoom(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func (h apiHandler) handleGetRooms(w http.ResponseWriter, r *http.Request) {}
+func (h apiHandler) handleGetRooms(w http.ResponseWriter, r *http.Request) {
+	rooms, err := h.q.GetRooms(r.Context())
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "No rooms found", http.StatusNotFound)
+			return
+		}
+
+		slog.Error("Error getting rooms", "error", err)
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(w, rooms)
+}
 
 func (h apiHandler) handleGetRoom(w http.ResponseWriter, r *http.Request) {
 	room, _, _, ok := h.readRoom(w, r)
