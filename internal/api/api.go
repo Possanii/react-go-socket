@@ -57,17 +57,21 @@ func NewHandler(q *pgstore.Queries) http.Handler {
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/rooms", func(r chi.Router) {
 			r.Post("/", a.handleCreateRoom)
-			r.Get("/", a.handleGetRoom)
+			r.Get("/", a.handleGetRooms)
 
-			r.Route("/{room_id}/messages", func(r chi.Router) {
-				r.Get("/", a.handleGetRoomMessages)
-				r.Post("/", a.handleCreateRoomMessage)
+			r.Route("/{room_id}", func(r chi.Router) {
+				r.Get("/", a.handleGetRoom)
 
-				r.Route("/{message_id}", func(r chi.Router) {
-					r.Get("/", a.handleGetRoomMessage)
-					r.Patch("/react", a.handleReactToMessage)
-					r.Delete("/react", a.handleRemoveReactFromMessage)
-					r.Patch("/answer", a.handleMarkMessageAsAnswered)
+				r.Route("/{room_id}/messages", func(r chi.Router) {
+					r.Get("/", a.handleGetRoomMessages)
+					r.Post("/", a.handleCreateRoomMessage)
+
+					r.Route("/{message_id}", func(r chi.Router) {
+						r.Get("/", a.handleGetRoomMessage)
+						r.Patch("/react", a.handleReactToMessage)
+						r.Delete("/react", a.handleRemoveReactFromMessage)
+						r.Patch("/answer", a.handleMarkMessageAsAnswered)
+					})
 				})
 			})
 		})
@@ -136,7 +140,16 @@ func (h apiHandler) handleCreateRoom(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func (h apiHandler) handleGetRoom(w http.ResponseWriter, r *http.Request) {}
+func (h apiHandler) handleGetRooms(w http.ResponseWriter, r *http.Request) {}
+
+func (h apiHandler) handleGetRoom(w http.ResponseWriter, r *http.Request) {
+	room, _, _, ok := h.readRoom(w, r)
+	if !ok {
+		return
+	}
+
+	sendJSON(w, room)
+}
 
 func (h apiHandler) handleGetRoomMessages(w http.ResponseWriter, r *http.Request) {}
 
