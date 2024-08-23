@@ -62,7 +62,7 @@ func NewHandler(q *pgstore.Queries) http.Handler {
 			r.Route("/{room_id}", func(r chi.Router) {
 				r.Get("/", a.handleGetRoom)
 
-				r.Route("/{room_id}/messages", func(r chi.Router) {
+				r.Route("/messages", func(r chi.Router) {
 					r.Get("/", a.handleGetRoomMessages)
 					r.Post("/", a.handleCreateRoomMessage)
 
@@ -170,7 +170,33 @@ func (h apiHandler) handleGetRoom(w http.ResponseWriter, r *http.Request) {
 	sendJSON(w, room)
 }
 
-func (h apiHandler) handleGetRoomMessages(w http.ResponseWriter, r *http.Request) {}
+func (h apiHandler) handleGetRoomMessages(w http.ResponseWriter, r *http.Request) {
+	rawRoomID := chi.URLParam(r, "room_id")
+	roomId, err := uuid.Parse(rawRoomID)
+
+	if err != nil {
+		http.Error(w, "Invalid json", http.StatusUnprocessableEntity)
+		return
+	}
+
+	roomMessages, err := h.q.GetRoomMessages(r.Context(), roomId)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "room not found", http.StatusBadRequest)
+			return
+		}
+
+		slog.Error("Error getting room messages", "error", err)
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	if roomMessages == nil {
+		roomMessages = []pgstore.Message{}
+	}
+
+	sendJSON(w, roomMessages)
+}
 
 func (h apiHandler) handleCreateRoomMessage(w http.ResponseWriter, r *http.Request) {
 	rawRoomId := chi.URLParam(r, "room_id")
