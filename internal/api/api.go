@@ -86,6 +86,7 @@ const (
 	MessageKindMessageCreate           = "message_create"
 	MessageKindMessageRactionIncreased = "message_reaction_increased"
 	MessageKindMessageRactionDecreased = "message_reaction_decreased"
+	MessageKindMessageAnswered         = "message_answered"
 )
 
 type MessageMessageReactionIncreased struct {
@@ -96,6 +97,10 @@ type MessageMessageReactionIncreased struct {
 type MessageMessageReactionDecreased struct {
 	ID    string `json:"id"`
 	Count int64  `json:"count"`
+}
+
+type MessageMessageAnswered struct {
+	ID string `json:"id"`
 }
 
 type MessageMessageCreated struct {
@@ -367,7 +372,36 @@ func (h apiHandler) handleRemoveReactFromMessage(w http.ResponseWriter, r *http.
 	})
 }
 
-func (h apiHandler) handleMarkMessageAsAnswered(w http.ResponseWriter, r *http.Request) {}
+func (h apiHandler) handleMarkMessageAsAnswered(w http.ResponseWriter, r *http.Request) {
+	_, rawRoomId, _, ok := h.readRoom(w, r)
+
+	if !ok {
+		return
+	}
+
+	_, rawMessageId, messageId, ok := h.readMessage(w, r)
+
+	if !ok {
+		return
+	}
+
+	err := h.q.MarkMessageAsAnswered(r.Context(), messageId)
+	if err != nil {
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		slog.Error("failed to react to message", "error", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	go h.notifyClients(Message{
+		Kind:   MessageKindMessageAnswered,
+		RoomID: rawRoomId,
+		Value: MessageMessageAnswered{
+			ID: rawMessageId,
+		},
+	})
+}
 
 func (h apiHandler) handleSubscribe(w http.ResponseWriter, r *http.Request) {
 	rawRoomId := chi.URLParam(r, "room_id")
