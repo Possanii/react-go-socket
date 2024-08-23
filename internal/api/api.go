@@ -85,9 +85,15 @@ func NewHandler(q *pgstore.Queries) http.Handler {
 const (
 	MessageKindMessageCreate           = "message_create"
 	MessageKindMessageRactionIncreased = "message_reaction_increased"
+	MessageKindMessageRactionDecreased = "message_reaction_decreased"
 )
 
 type MessageMessageReactionIncreased struct {
+	ID    string `json:"id"`
+	Count int64  `json:"count"`
+}
+
+type MessageMessageReactionDecreased struct {
 	ID    string `json:"id"`
 	Count int64  `json:"count"`
 }
@@ -324,7 +330,42 @@ func (h apiHandler) handleReactToMessage(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-func (h apiHandler) handleRemoveReactFromMessage(w http.ResponseWriter, r *http.Request) {}
+func (h apiHandler) handleRemoveReactFromMessage(w http.ResponseWriter, r *http.Request) {
+	_, rawRoomId, _, ok := h.readRoom(w, r)
+
+	if !ok {
+		return
+	}
+
+	_, rawMessageId, messageId, ok := h.readMessage(w, r)
+
+	if !ok {
+		return
+	}
+
+	count, err := h.q.RemoveReactionFromMessage(r.Context(), messageId)
+
+	if err != nil {
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		slog.Error("failed to remove reaction from message", "error", err)
+		return
+	}
+
+	type response struct {
+		Count int64 `json:"count"`
+	}
+
+	sendJSON(w, response{Count: count})
+
+	go h.notifyClients(Message{
+		Kind:   MessageKindMessageRactionDecreased,
+		RoomID: rawRoomId,
+		Value: MessageMessageReactionDecreased{
+			ID:    rawMessageId,
+			Count: count,
+		},
+	})
+}
 
 func (h apiHandler) handleMarkMessageAsAnswered(w http.ResponseWriter, r *http.Request) {}
 
