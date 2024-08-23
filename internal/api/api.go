@@ -252,7 +252,34 @@ func (h apiHandler) handleCreateRoomMessage(w http.ResponseWriter, r *http.Reque
 	})
 }
 
-func (h apiHandler) handleGetRoomMessage(w http.ResponseWriter, r *http.Request) {}
+func (h apiHandler) handleGetRoomMessage(w http.ResponseWriter, r *http.Request) {
+	_, _, _, ok := h.readRoom(w, r)
+	if !ok {
+		return
+	}
+
+	rawMessageId := chi.URLParam(r, "message_id")
+	MessageId, err := uuid.Parse(rawMessageId)
+
+	if err != nil {
+		http.Error(w, "Invalid message id", http.StatusUnprocessableEntity)
+		return
+	}
+
+	message, err := h.q.GetMessage(r.Context(), MessageId)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "message not found", http.StatusBadRequest)
+			return
+		}
+
+		slog.Error("failed to get message", "error", err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(w, message)
+}
 
 func (h apiHandler) handleReactToMessage(w http.ResponseWriter, r *http.Request) {}
 
