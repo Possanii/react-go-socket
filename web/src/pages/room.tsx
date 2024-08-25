@@ -2,8 +2,9 @@ import { ArrowRight, Share2 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
+import { Suspense } from "react";
 import amaLogo from "../assets/ama-logo.svg";
-import { Message } from "../components/message";
+import { Messages } from "../components/messages";
 
 export function Room() {
   const { roomId } = useParams();
@@ -61,13 +62,9 @@ export function Room() {
         </button>
       </form>
 
-      <ol className="list-decimal list-outside px-3 space-y-8">
-        <Message
-          text="O que é GoLang e quais são suas principais vantagens em comparação com outras linguagens de programação como Python, Java ou C++?"
-          amountOfReactions={50}
-          answered
-        />
-      </ol>
+      <Suspense fallback={<p>Loading...</p>}>
+        <Messages />
+      </Suspense>
     </div>
   );
 }
