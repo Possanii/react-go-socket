@@ -22,7 +22,7 @@ export async function getRoomMessages({
     ID: string;
     Room_id: string;
     Message: string;
-    Reaction_count: number;
+    ReactionCount: number;
     Answered: boolean;
   }> = await response.json();
 
@@ -31,7 +31,7 @@ export async function getRoomMessages({
       return {
         id: item.ID,
         text: item.Message,
-        amountOfReactions: item.Reaction_count,
+        amountOfReactions: item.ReactionCount,
         answered: item.Answered,
       };
     }),

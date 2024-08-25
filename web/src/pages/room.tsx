@@ -1,9 +1,10 @@
-import { ArrowRight, Share2 } from "lucide-react";
+import { Share2 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Suspense } from "react";
 import amaLogo from "../assets/ama-logo.svg";
+import { CreateMessageForm } from "../components/create-message-form";
 import { Messages } from "../components/messages";
 
 export function Room() {
@@ -42,25 +43,7 @@ export function Room() {
 
       <div className="h-px w-full bg-zinc-900"></div>
 
-      <form
-        // action={handleCreateRoom}
-        className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 p-2 ring-orange-400 ring-offset-2 ring-offset-zinc-950 focus-within:ring-2"
-      >
-        <input
-          type="text"
-          name="theme"
-          placeholder="Qual a sua pergunta?"
-          autoComplete="off"
-          className="flex-1 text-sm bg-transparent mx-2 outline-none text-zinc-100 placeholder:text-zinc-500"
-        />
-        <button
-          type="submit"
-          className="bg-orange-400 text-orange-950 rounded-lg gap-1.5 px-3 py-1.5 flex items-center font-medium text-sm transition-colors hover:bg-orange-500"
-        >
-          Criar pergunta
-          <ArrowRight className="size-4" />
-        </button>
-      </form>
+      <CreateMessageForm />
 
       <Suspense fallback={<p>Loading...</p>}>
         <Messages />
