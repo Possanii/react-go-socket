@@ -83,7 +83,7 @@ func NewHandler(q *pgstore.Queries) http.Handler {
 }
 
 const (
-	MessageKindMessageCreate           = "message_create"
+	MessageKindMessageCreate           = "message_created"
 	MessageKindMessageRactionIncreased = "message_reaction_increased"
 	MessageKindMessageRactionDecreased = "message_reaction_decreased"
 	MessageKindMessageAnswered         = "message_answered"
