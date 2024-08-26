@@ -31,7 +31,11 @@ export function Messages() {
 
     ws.onmessage = (event) => {
       const data: {
-        kind: "message_create" | "message_answered";
+        kind:
+          | "message_create"
+          | "message_answered"
+          | "message_reaction_increased"
+          | "message_reaction_decreased";
         value: any;
       } = JSON.parse(event.data);
 
@@ -68,6 +72,27 @@ export function Messages() {
                 messages: state.messages.map((message) => {
                   if (message.id === data.value.id) {
                     return { ...message, answered: true };
+                  }
+
+                  return message;
+                }),
+              };
+            }
+          );
+          break;
+        case "message_reaction_increased":
+        case "message_reaction_decreased":
+          queryClient.setQueryData<GetRoomMessagesResponse>(
+            ["messages", roomId],
+            (state) => {
+              if (!state) {
+                return undefined;
+              }
+
+              return {
+                messages: state.messages.map((message) => {
+                  if (message.id === data.value.id) {
+                    return { ...message, amountOfReactions: data.value.count };
                   }
 
                   return message;
