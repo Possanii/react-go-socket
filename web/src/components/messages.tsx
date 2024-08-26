@@ -20,6 +20,8 @@ export function Messages() {
     queryFn: () => getRoomMessages({ roomId }),
   });
 
+  console.log(data.messages);
+
   useEffect(() => {
     const ws = new WebSocket(`ws://localhost:8080/subscribe/${roomId}`);
 
@@ -29,9 +31,11 @@ export function Messages() {
 
     ws.onmessage = (event) => {
       const data: {
-        kind: "message_create";
+        kind: "message_create" | "message_answered";
         value: any;
       } = JSON.parse(event.data);
+
+      console.log(data);
 
       switch (data.kind) {
         case "message_create":
@@ -48,6 +52,26 @@ export function Messages() {
                     answered: false,
                   },
                 ],
+              };
+            }
+          );
+          break;
+        case "message_answered":
+          queryClient.setQueryData<GetRoomMessagesResponse>(
+            ["messages", roomId],
+            (state) => {
+              if (!state) {
+                return undefined;
+              }
+
+              return {
+                messages: state.messages.map((message) => {
+                  if (message.id === data.value.id) {
+                    return { ...message, answered: true };
+                  }
+
+                  return message;
+                }),
               };
             }
           );
